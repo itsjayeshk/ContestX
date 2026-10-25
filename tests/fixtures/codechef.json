@@ -1,0 +1,15 @@
+{
+  "status": "success",
+  "message": "All contests list",
+  "present_contests": [
+    { "contest_code": "PRACTICE", "contest_name": "Practice", "contest_start_date": "17 Jul 2009  15:00:00", "contest_end_date": "17 Jul 2036  15:00:00", "contest_start_date_iso": "2009-07-17T15:00:00+05:30", "contest_end_date_iso": "2036-07-17T15:00:00+05:30", "contest_duration": "14025600", "distinct_users": 0 }
+  ],
+  "future_contests": [
+    { "contest_code": "START215", "contest_name": "Starters 215", "contest_start_date": "29 Oct 2026  20:00:00", "contest_end_date": "29 Oct 2026  22:00:00", "contest_start_date_iso": "2026-10-29T20:00:00+05:30", "contest_end_date_iso": "2026-10-29T22:00:00+05:30", "contest_duration": "120", "distinct_users": 0 },
+    { "contest_code": "START216", "contest_name": "Starters 216 (Div. 2)", "contest_start_date": "5 Nov 2026  20:00:00", "contest_start_date_iso": "2026-11-05T20:00:00+05:30", "contest_duration": "120", "distinct_users": 0 },
+    { "contest_name": "Broken entry without a start", "contest_duration": "60" }
+  ],
+  "past_contests": [
+    { "contest_code": "START214", "contest_name": "Starters 214", "contest_start_date_iso": "2026-10-22T20:00:00+05:30", "contest_end_date_iso": "2026-10-22T22:00:00+05:30", "contest_duration": "120" }
+  ]
+}

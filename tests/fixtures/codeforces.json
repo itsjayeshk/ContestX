@@ -1,0 +1,11 @@
+{
+  "status": "OK",
+  "result": [
+    { "id": 2201, "name": "Codeforces Round 1060 (Div. 2)", "type": "CF", "phase": "BEFORE", "frozen": false, "durationSeconds": 7200, "startTimeSeconds": 1793025300, "relativeTimeSeconds": -400000 },
+    { "id": 2199, "name": "Educational Codeforces Round 185 (Rated for Div. 2)", "type": "ICPC", "phase": "BEFORE", "frozen": false, "durationSeconds": 7200, "startTimeSeconds": 1793198100, "relativeTimeSeconds": -500000 },
+    { "id": 2198, "name": "Codeforces Round 1059 (Div. 1 + Div. 2)", "type": "CF", "phase": "CODING", "frozen": false, "durationSeconds": 9000, "startTimeSeconds": 1792850000 },
+    { "id": 2190, "name": "Codeforces Global Round 31", "type": "CF", "phase": "FINISHED", "frozen": false, "durationSeconds": 10800, "startTimeSeconds": 1792400000 },
+    { "id": 100, "name": "Codeforces Beta Round 1", "type": "CF", "phase": "FINISHED", "frozen": false, "durationSeconds": 7200, "startTimeSeconds": 1266588000 },
+    { "id": 2300, "name": "Unscheduled round", "type": "CF", "phase": "BEFORE", "frozen": false, "durationSeconds": 7200 }
+  ]
+}

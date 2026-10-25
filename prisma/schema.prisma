@@ -1,0 +1,271 @@
+// ContestX data model. All timestamps are stored in UTC (timestamptz) and only
+// converted to a user's timezone for display.
+
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Platform {
+  LEETCODE
+  CODEFORCES
+  CODECHEF
+}
+
+enum Role {
+  USER
+  ADMIN
+}
+
+enum ContestState {
+  SCHEDULED
+  CANCELLED
+}
+
+enum ReminderScope {
+  ALL_QUALIFYING
+  BOOKMARKED_ONLY
+}
+
+enum Channel {
+  EMAIL
+  PUSH
+  IN_APP
+}
+
+enum ReminderStatus {
+  PENDING
+  PROCESSING
+  SENT
+  FAILED
+  SKIPPED
+  CANCELLED
+}
+
+enum DeliveryStatus {
+  SUCCESS
+  FAILED
+  SKIPPED
+}
+
+enum SyncStatus {
+  SUCCESS
+  PARTIAL
+  FAILED
+}
+
+model User {
+  id               String   @id @default(cuid())
+  email            String   @unique
+  passwordHash     String
+  name             String?
+  role             Role     @default(USER)
+  timezone         String   @default("Asia/Kolkata")
+  codeforcesHandle String?
+  leetcodeHandle   String?
+  // Secret token for the read-only iCal feed URL. Rotatable.
+  calendarToken    String   @unique
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  sessions           Session[]
+  reminderPreference ReminderPreference?
+  bookmarks          ContestBookmark[]
+  contestPreferences UserContestPreference[]
+  scheduledReminders ScheduledReminder[]
+  deliveries         NotificationDelivery[]
+  pushSubscriptions  PushSubscription[]
+}
+
+model Session {
+  // sha256 of the random token stored in the cookie; the raw token is never persisted
+  id        String   @id
+  userId    String
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  userAgent String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
+}
+
+model Contest {
+  id                String       @id @default(cuid())
+  platform          Platform
+  // Platform-provided ID, or a deterministic fallback key when none exists
+  providerContestId String
+  name              String
+  url               String
+  startTime         DateTime
+  durationSeconds   Int
+  endTime           DateTime
+  division          String?
+  kind              String?
+  state             ContestState @default(SCHEDULED)
+  // Incremented whenever the start time changes; reminders are keyed on it
+  scheduleVersion   Int          @default(0)
+  previousStartTime DateTime?
+  scheduleChangedAt DateTime?
+  // Consecutive successful syncs in which an upcoming contest was missing
+  missingCount      Int          @default(0)
+  source            String
+  firstSeenAt       DateTime     @default(now())
+  lastSeenAt        DateTime     @default(now())
+  lastFetchedAt     DateTime     @default(now())
+  // Development-only seeded rows; always labelled in the UI and refused in production
+  isSample          Boolean      @default(false)
+  createdAt         DateTime     @default(now())
+  updatedAt         DateTime     @updatedAt
+
+  bookmarks          ContestBookmark[]
+  userPreferences    UserContestPreference[]
+  scheduledReminders ScheduledReminder[]
+
+  @@unique([platform, providerContestId])
+  @@index([startTime])
+  @@index([platform, startTime])
+  @@index([state, startTime])
+}
+
+model ContestBookmark {
+  userId    String
+  contestId String
+  createdAt DateTime @default(now())
+
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  contest Contest @relation(fields: [contestId], references: [id], onDelete: Cascade)
+
+  @@id([userId, contestId])
+  @@index([contestId])
+}
+
+model ReminderPreference {
+  id             String        @id @default(cuid())
+  userId         String        @unique
+  enabled        Boolean       @default(true)
+  scope          ReminderScope @default(ALL_QUALIFYING)
+  // Minutes before start, from the allowed presets (1440, 60, 30, 15, 5)
+  offsetsMinutes Int[]         @default([60, 15])
+  platforms      Platform[]    @default([LEETCODE, CODEFORCES, CODECHEF])
+  emailEnabled   Boolean       @default(true)
+  pushEnabled    Boolean       @default(false)
+  inAppEnabled   Boolean       @default(true)
+  updatedAt      DateTime      @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model UserContestPreference {
+  userId          String
+  contestId       String
+  excluded        Boolean  @default(false)
+  hasOverride     Boolean  @default(false)
+  offsetsOverride Int[]    @default([])
+  updatedAt       DateTime @updatedAt
+
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  contest Contest @relation(fields: [contestId], references: [id], onDelete: Cascade)
+
+  @@id([userId, contestId])
+}
+
+model ScheduledReminder {
+  id              String         @id @default(cuid())
+  userId          String
+  contestId       String
+  offsetMinutes   Int
+  channel         Channel
+  scheduleVersion Int
+  fireAt          DateTime
+  status          ReminderStatus @default(PENDING)
+  attempts        Int            @default(0)
+  nextAttemptAt   DateTime?
+  lockedAt        DateTime?
+  lockedBy        String?
+  lastError       String?
+  sentAt          DateTime?
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+
+  user       User                   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  contest    Contest                @relation(fields: [contestId], references: [id], onDelete: Cascade)
+  deliveries NotificationDelivery[]
+
+  // One reminder per user/contest/offset/channel for a given schedule version.
+  @@unique([userId, contestId, offsetMinutes, channel, scheduleVersion], map: "ScheduledReminder_dedupe_key")
+  @@index([status, fireAt])
+  @@index([userId, status, fireAt])
+  @@index([contestId])
+}
+
+model NotificationDelivery {
+  id                String         @id @default(cuid())
+  reminderId        String?
+  userId            String
+  channel           Channel
+  status            DeliveryStatus
+  attempt           Int            @default(1)
+  title             String
+  body              String
+  url               String?
+  providerMessageId String?
+  error             String?
+  isTest            Boolean        @default(false)
+  readAt            DateTime?
+  createdAt         DateTime       @default(now())
+
+  reminder ScheduledReminder? @relation(fields: [reminderId], references: [id], onDelete: SetNull)
+  user     User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([reminderId, attempt])
+  @@index([userId, createdAt])
+  @@index([status, createdAt])
+}
+
+model ProviderSyncLog {
+  id               String     @id @default(cuid())
+  platform         Platform
+  status           SyncStatus
+  startedAt        DateTime   @default(now())
+  finishedAt       DateTime?
+  durationMs       Int?
+  attempts         Int        @default(1)
+  fetchedCount     Int        @default(0)
+  createdCount     Int        @default(0)
+  updatedCount     Int        @default(0)
+  rescheduledCount Int        @default(0)
+  cancelledCount   Int        @default(0)
+  error            String?
+
+  @@index([platform, startedAt])
+  @@index([status, startedAt])
+}
+
+model PushSubscription {
+  id            String    @id @default(cuid())
+  userId        String
+  endpoint      String    @unique
+  p256dh        String
+  auth          String
+  userAgent     String?
+  createdAt     DateTime  @default(now())
+  lastSuccessAt DateTime?
+  failureCount  Int       @default(0)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model WorkerHeartbeat {
+  id        String   @id
+  lastBeat  DateTime
+  startedAt DateTime
+  info      Json?
+}

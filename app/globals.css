@@ -1,0 +1,191 @@
+@import "tailwindcss";
+@import "@fontsource-variable/mona-sans/wdth.css";
+
+/*
+  CONTESTX design tokens
+  void      #050508  page background
+  graphite  #0e0f15  raised surface
+  slate     #15161e  panels
+  hairline  rgba(255,255,255,.07)
+  ink       #e8e8ef  primary text
+  fog       #8b8c9b  secondary text
+  violet    #8b7bff  primary accent
+  cyan      #7fe3f0  secondary accent (time, live)
+*/
+
+@theme {
+  --font-sans: "Mona Sans Variable", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+
+  --color-void: #050508;
+  --color-graphite: #0e0f15;
+  --color-slate: #15161e;
+  --color-slate-2: #1b1c26;
+  --color-line: rgb(255 255 255 / 0.07);
+  --color-line-strong: rgb(255 255 255 / 0.13);
+  --color-ink: #e8e8ef;
+  --color-ink-2: #c4c4cf;
+  --color-fog: #8b8c9b;
+  --color-fog-2: #5f6070;
+  --color-violet: #8b7bff;
+  --color-violet-soft: #b3a8ff;
+  --color-cyan: #7fe3f0;
+  --color-amber: #f0c674;
+  --color-danger: #ff7a8a;
+  --color-ok: #74e0a8;
+
+  --color-lc: #c98220;
+  --color-cf: #5b86e5;
+  --color-cc: #c46fa8;
+
+  --radius-panel: 14px;
+  --radius-control: 9px;
+
+  --ease-out-soft: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@layer base {
+  :root {
+    color-scheme: dark;
+  }
+  html {
+    background: var(--color-void);
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+  body {
+    background: var(--color-void);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+    font-size: 15px;
+    line-height: 1.55;
+    font-variation-settings: "wdth" 100;
+    min-height: 100dvh;
+  }
+  ::selection {
+    background: rgb(139 123 255 / 0.35);
+  }
+  :focus-visible {
+    outline: 2px solid var(--color-violet);
+    outline-offset: 2px;
+    border-radius: 6px;
+  }
+  /* Thin, dark scrollbars */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: rgb(255 255 255 / 0.12) transparent;
+  }
+}
+
+@layer components {
+  /* Wide, tight display type: the headline voice of the product */
+  .display {
+    font-variation-settings: "wdth" 125;
+    font-weight: 640;
+    letter-spacing: -0.035em;
+    line-height: 0.98;
+  }
+  .heading {
+    font-variation-settings: "wdth" 112;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    line-height: 1.15;
+  }
+  .num {
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: "tnum" 1;
+  }
+
+  /* Panels: hairline border, faint top light, no drop shadow soup */
+  .panel {
+    background:
+      linear-gradient(180deg, rgb(255 255 255 / 0.025), transparent 40%),
+      var(--color-slate);
+    border: 1px solid var(--color-line);
+    border-radius: var(--radius-panel);
+  }
+  .glass {
+    background: rgb(14 15 21 / 0.62);
+    backdrop-filter: blur(16px) saturate(140%);
+    -webkit-backdrop-filter: blur(16px) saturate(140%);
+    border: 1px solid var(--color-line);
+  }
+
+  /* Gradient hairline border used only on the featured contest */
+  .ring-gradient {
+    position: relative;
+    isolation: isolate;
+  }
+  .ring-gradient::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    padding: 1px;
+    border-radius: inherit;
+    background: linear-gradient(135deg, rgb(139 123 255 / 0.85), rgb(127 227 240 / 0.45) 45%, rgb(255 255 255 / 0.06) 70%);
+    -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    pointer-events: none;
+    z-index: -1;
+  }
+
+  .skeleton {
+    background: linear-gradient(90deg, rgb(255 255 255 / 0.03), rgb(255 255 255 / 0.07), rgb(255 255 255 / 0.03));
+    background-size: 200% 100%;
+    animation: shimmer 1.4s linear infinite;
+    border-radius: 8px;
+  }
+}
+
+@keyframes shimmer {
+  to {
+    background-position: -200% 0;
+  }
+}
+
+/* Ambient page light. Fixed, cheap, and off for reduced motion users. */
+.ambient {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  background:
+    radial-gradient(60rem 30rem at 85% -10%, rgb(139 123 255 / 0.10), transparent 60%),
+    radial-gradient(40rem 24rem at -10% 10%, rgb(127 227 240 / 0.05), transparent 60%);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+@keyframes menu-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px) scale(0.98);
+  }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+}
+@keyframes slide-in {
+  from {
+    transform: translateX(24px);
+    opacity: 0;
+  }
+}
+@keyframes dialog-in {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -48%) scale(0.98);
+  }
+}

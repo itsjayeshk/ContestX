@@ -1,0 +1,37 @@
+# Local or single-host deployment: Postgres + web + worker.
+# Usage: cp .env.example .env (fill in secrets), then `docker compose up --build`.
+services:
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: contestx
+      POSTGRES_PASSWORD: contestx
+      POSTGRES_DB: contestx
+    volumes: [pgdata:/var/lib/postgresql/data]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U contestx"]
+      interval: 5s
+      retries: 10
+
+  web:
+    build: .
+    env_file: .env
+    environment:
+      DATABASE_URL: postgresql://contestx:contestx@db:5432/contestx
+    ports: ["3000:3000"]
+    depends_on:
+      db: { condition: service_healthy }
+    restart: unless-stopped
+
+  worker:
+    build: .
+    command: ["npm", "run", "worker"]
+    env_file: .env
+    environment:
+      DATABASE_URL: postgresql://contestx:contestx@db:5432/contestx
+    depends_on:
+      web: { condition: service_started }
+    restart: unless-stopped
+
+volumes:
+  pgdata:

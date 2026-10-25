@@ -1,0 +1,31 @@
+name: CI
+on: [push, pull_request]
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env: { POSTGRES_USER: contestx, POSTGRES_PASSWORD: contestx, POSTGRES_DB: contestx }
+        ports: ["5432:5432"]
+        options: --health-cmd pg_isready --health-interval 5s --health-retries 10
+    env:
+      DATABASE_URL: postgresql://contestx:contestx@localhost:5432/contestx
+      TEST_DATABASE_URL: postgresql://contestx:contestx@localhost:5432/contestx_test
+      SHADOW_DATABASE_URL: postgresql://contestx:contestx@localhost:5432/contestx_shadow
+      SESSION_SECRET: ci-only-secret-ci-only-secret-ci-only-secret
+      APP_URL: http://localhost:3000
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: npm }
+      - run: npm ci
+      - run: PGPASSWORD=contestx psql -h localhost -U contestx -c "CREATE DATABASE contestx_test" -c "CREATE DATABASE contestx_shadow"
+      - run: npx prisma migrate deploy
+      - run: DATABASE_URL=$TEST_DATABASE_URL npx prisma migrate deploy
+      - run: npx prisma migrate diff --from-migrations prisma/migrations --to-schema prisma/schema.prisma --exit-code
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run build
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:e2e

@@ -1,0 +1,9 @@
+{
+  "data": {
+    "upcomingContests": [
+      { "title": "Weekly Contest 474", "titleSlug": "weekly-contest-474", "startTime": 1793500200, "duration": 5400 },
+      { "title": "Biweekly Contest 168", "titleSlug": "biweekly-contest-168", "startTime": 1793889000, "duration": 5400 },
+      { "title": "Bad", "titleSlug": "bad" }
+    ]
+  }
+}
